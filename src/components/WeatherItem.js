@@ -42,12 +42,6 @@ export default class WeatherItem extends Component {
           break;
       }
     };
-    // function getT(time) {
-    //   let time = this.props.time;
-    //   const moonLanding = new Date(time);
-    //   moonLanding = moonLanding.getTime();
-    // }
-    // console.log(this.props.time);
     return (
       <div
         style={{
