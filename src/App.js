@@ -20,6 +20,8 @@ class App extends Component {
       city: "london",
       fakeWeatherData: null,
       loaded: false,
+      Error: "",
+      hasError: false
     };
     this.getWeatherData = this.getWeatherData.bind(this);
     this.handleInputChange = this.handleInputChange.bind(this);
@@ -55,19 +57,34 @@ class App extends Component {
 
   getWeatherData(cityName) {
     fetch(
-      `http://api.openweathermap.org/data/2.5/forecast?q=${cityName}&cnt=8&units=metric&appid=78a1b5a0d784c6c12292ea85e9a6eaa7`
+      `http://api.openweathermap.org/data/2.5/forecast?q=${this.state.city}&cnt=8&units=metric&appid=78a1b5a0d784c6c12292ea85e9a6eaa7`
     )
       .then((response) => {
-        if (!response.ok) throw new Error(response.status);
-        else return response.json();
+        if (!response.ok) {
+          console.log(response.status)
+          this.setState({hasError: true})
+          if (response.status == 400){
+            throw Error("You Have an Probleme in Fetsh or you Cannot Access To internet")}
+            else if (response.status == 404){ throw Error("The Name Of City Invalid")}
+          // throw new Error(response.status);
+          // if (response.status == 400){
+          //    new Error("You Have an Probleme in Fetsh or you Cannot Access To internet")}
+          //    else if (response.status == 404){ new Error("The Name Of City Invalid")}
+  
+        }
+          else return response.json();
       })
       .then((data) => {
         this.setState({ fakeWeatherData: data, loaded: true });
+        this.setState({hasError: false})
         console.log(this.state.fakeWeatherData);
         console.log(typeof this.state.fakeWeatherData.list[0].main.temp_min);
       })
       .catch((error) => {
         console.log("error: " + error);
+        console.log("error: " + error.message);
+        this.setState({hasError: true})
+        this.setState({Error: error.message})
       });
   }
 
@@ -76,14 +93,22 @@ class App extends Component {
   }
 
   render() {
+   if(this.state.hasError){ return(
+    <div className="app">
+   
+   <div><h1> The Error is {this.state.Error}</h1></div></div>)}
+
+else{
     return (
       <div className="app">
+      
         <header className="app__header">
           <Search handleInput={this.handleInputChange} />
         </header>
         <main className="app__main" style={{ height: "100vh" }}>
           <CurrentWeather
-            handleImgSrc={this.imgSrc}
+                      handleImgSrc={this.imgSrc}
+
             loaded={this.state.loaded}
             data={
               this.state.fakeWeatherData ? this.state.fakeWeatherData : null
@@ -100,15 +125,14 @@ class App extends Component {
           >
             {this.state.loaded
               ? this.state.fakeWeatherData.list.map((e, i) => {
-                  if (i < 8 && i > 0)
+                  if (i < 7)
                     return (
                       <WeatherItem
-                        key={i}
+                        handleImgSrc={this.imgSrc}
                         loaded={this.state.loaded}
                         meanTemperature={e.main.temp}
-                        img={e.weather[0].id}
+                        img={e.weather[0].main.toLocaleLowerCase()}
                         time={e.dt_txt}
-                        handleImgSrc={this.imgSrc}
                       />
                     );
                 })
@@ -116,7 +140,7 @@ class App extends Component {
           </div>
         </main>
       </div>
-    );
+    );}
   }
 }
 export default App;
