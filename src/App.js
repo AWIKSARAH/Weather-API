@@ -1,7 +1,5 @@
 import React, { Component } from "react";
 import Search from "./components/Search";
-
-import SayHi, { SayHello } from "./components/WeatherItem";
 import "./App.css";
 import CurrentWeather from "./components/CurrentWeather";
 import WeatherItem from "./components/WeatherItem";
@@ -11,25 +9,38 @@ class App extends Component {
     super(props);
     this.state = {
       city: "london",
-      fakeWeatherData: [],
+      fakeWeatherData: null,
+      loaded: false,
     };
+    this.getWeatherData = this.getWeatherData.bind(this);
+    this.handleInputChange = this.handleInputChange.bind(this);
   }
 
   handleInputChange = (value) => {
     this.setState({ city: value });
+    this.componentDidMount(value);
   };
-  componentDidMount() {
+
+  getWeatherData(cityName) {
     fetch(
-      `http://api.openweathermap.org/data/2.5/forecast?q=${this.state.city}&cnt=8&units=metric&appid=78a1b5a0d784c6c12292ea85e9a6eaa7`
+      `http://api.openweathermap.org/data/2.5/forecast?q=${cityName}&cnt=8&units=metric&appid=78a1b5a0d784c6c12292ea85e9a6eaa7`
     )
-      .then((res) => res.json())
-      .then((data) => {
-        this.setState({
-          fakeWeatherData: data,
-        });
-        console.log(this.state.fakeWeatherData);
+      .then((response) => {
+        if (!response.ok) throw new Error(response.status);
+        else return response.json();
       })
-      .catch((err) => console.log(err));
+      .then((data) => {
+        this.setState({ fakeWeatherData: data, loaded: true });
+        console.log(this.state.fakeWeatherData);
+        console.log(typeof this.state.fakeWeatherData.list[0].main.temp_min);
+      })
+      .catch((error) => {
+        console.log("error: " + error);
+      });
+  }
+
+  componentDidMount() {
+    this.getWeatherData(this.state.city);
   }
 
   render() {
@@ -40,12 +51,10 @@ class App extends Component {
         </header>
         <main className="app__main" style={{ height: "100vh" }}>
           <CurrentWeather
-            temp_min={this.state.fakeWeatherData.list[0].main.temp_min}
-            temp_max={this.state.fakeWeatherData.list[0].main.temp_max}
-            humidity={this.state.fakeWeatherData.list[0].main.humidity}
-            pressure={this.state.fakeWeatherData.list[0].main.pressure}
-            img={this.state.fakeWeatherData.list[0].weather[0].main.toLowerCase()}
-            name={this.state.city}
+            loaded={this.state.loaded}
+            data={
+              this.state.fakeWeatherData ? this.state.fakeWeatherData : null
+            }
           />
           <div
             style={{
@@ -56,17 +65,19 @@ class App extends Component {
               marginTop: "50px",
             }}
           >
-            {console.log(this.state.fakeWeatherData.componentDidMount())}
-            {this.state.fakeWeatherData.list.map((e, i) => {
-              if (i < 7)
-                return (
-                  <WeatherItem
-                    meanTemperature={e.main.temp}
-                    img={e.weather[0].main.toLocaleLowerCase()}
-                    time={this.state.fakeWeatherData.list[i].dt_txt}
-                  />
-                );
-            })}
+            {this.state.loaded
+              ? this.state.fakeWeatherData.list.map((e, i) => {
+                  if (i < 7)
+                    return (
+                      <WeatherItem
+                        loaded={this.state.loaded}
+                        meanTemperature={e.main.temp}
+                        img={e.weather[0].main.toLocaleLowerCase()}
+                        time={e.dt_txt}
+                      />
+                    );
+                })
+              : null}
           </div>
         </main>
       </div>
